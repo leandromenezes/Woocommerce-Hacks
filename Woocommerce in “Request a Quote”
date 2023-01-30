@@ -1,0 +1,108 @@
+Step 1: Hide Woocommerce Prices on the Shop and Category Pages
+
+// Hide Woocommerce Prices on the Shop and Category Pages
+add_filter( 'woocommerce_get_price_html', 'woocommerce_remove_price');
+function woocommerce_remove_price($price){     
+     return ;
+}
+
+Step 2: Rename "Add to cart" and "Place order" button texts
+
+// Rename Woocommerce "Add to cart" and "Place order" text
+add_filter('gettext', 'translate_strings');
+add_filter('ngettext', 'translate_strings');
+function translate_strings($translated) {
+	$translated = str_ireplace('Add to cart', 'Add to enquiry', $translated);
+  $translated = str_ireplace('Place order', 'Request a quote', $translated);
+return $translated;
+}
+
+Step 3: Skip Woocommerce cart page and redirect it to the Checkout page
+
+// Skip Woocommerce cart page and redirect to checkout
+add_action('template_redirect', 'wpsh_skip_cart');
+function wpsh_skip_cart() {
+    // If is cart page, redirect checkout.
+    if( is_cart() )
+        wp_redirect( WC()->cart->get_checkout_url() );
+}
+
+Step 4: Disable all Woocommerce payment gateways
+
+// Disable all Woocommerce payment gateways
+add_filter( 'woocommerce_cart_needs_payment', '__return_false' );
+
+Step 5: Remove un-necessary Woocommerce checkout fields
+
+// Remove Woocommerce checkout fields
+add_filter( 'woocommerce_checkout_fields' , 'custom_override_checkout_fields' );
+
+function custom_override_checkout_fields( $fields ) {
+   // unset($fields['billing']['billing_first_name']); // Billing First name
+   // unset($fields['billing']['billing_last_name']); // Billing Last name
+   // unset($fields['billing']['billing_company']); // Billing company
+    unset($fields['billing']['billing_address_1']); // Billing Address 1
+    unset($fields['billing']['billing_address_2']); // Billing Address 2
+    unset($fields['billing']['billing_city']); // Billing city
+    unset($fields['billing']['billing_postcode']); // Billing postcode
+   // unset($fields['billing']['billing_country']); // Billing country
+    unset($fields['billing']['billing_state']); // Billing state
+   // unset($fields['billing']['billing_phone']); // Billing phone
+   // unset($fields['billing']['billing_email']); // Billing email
+   // unset($fields['order']['order_comments']); // Order comments
+     return $fields;
+}
+
+Step 6: Remove "Ship to a different address" section
+
+I need only billing section to be activated and there’s no need for shipping fields. So, I’ll go to Woocommerce >> Settings >> Shipping >> Shipping options and activate “Force shipping to the customer billing address.”
+
+Step 6: Add "Remove item" option to Woocommerce checkout page
+
+Since I deactivated my cart page and redirected it to the checkout page, I need an option that allows my customers to remove items from the Woocommerce checkout page. 
+
+// Add "Remove item" option to Woocommerce checkout page
+add_filter( 'woocommerce_cart_item_name', 'wpsh_checkout_remove_item', 10, 3 );
+function wpsh_checkout_remove_item( $product_name, $cart_item, $cart_item_key ) {
+if ( is_checkout() ) {
+    $_product = apply_filters( 'woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key );
+    $product_id = apply_filters( 'woocommerce_cart_item_product_id', $cart_item['product_id'], $cart_item, $cart_item_key );
+
+    $remove_link = apply_filters( 'woocommerce_cart_item_remove_link', sprintf(
+        '<a href="%s" class="remove" aria-label="%s" data-product_id="%s" data-product_sku="%s">×</a>',
+        esc_url( WC()->cart->get_remove_url( $cart_item_key ) ),
+        __( 'Remove this item', 'woocommerce' ),
+        esc_attr( $product_id ),
+        esc_attr( $_product->get_sku() )
+    ), $cart_item_key );
+
+    return '<span>' . $remove_link . '</span> <span>' . $product_name . '</span>';
+}
+
+Step 7: Redirect empty Woocommerce cart and checkout page to the shop page
+
+At this point there’s a small issue. That is, since I removed my cart page then removing all items from checkout page will redirect us to the cart page. This one again redirects us to the checkout page, and we’ll end up with “Too many redirects” error. To fix it, we’ll redirect empty cart anc checkout page to the main shop page.
+
+// Redirect empty Woocommerce cart and checkout page to the shop page
+add_action("template_redirect", 'wpsh_redirect_empty_cart');
+function wpsh_redirect_empty_cart(){
+    global $woocommerce;
+    if( is_cart() && WC()->cart->cart_contents_count == 0){
+        wp_safe_redirect( get_permalink( woocommerce_get_page_id( 'shop' ) ) );
+    }
+}
+
+Step 8: Add custom CSS
+
+With the help of this custom CSS here below you’ll remove shipping and pricing info from the checkout page and thank you page
+
+.woocommerce-shipping-totals.shipping, th.product-total, tr.order-total, tr.cart-subtotal, td.product-total, .order_details tfoot, .woocommerce-Price-amount {
+	display: none;
+}
+#order_review table.shop_table tr>*:first-child {
+    width: 100% !important;
+}
+
+Step 9: Disable Woocommerce coupons
+
+Go to Woocommerce >> Settings and uncheck “Enable the use of coupon codes”
