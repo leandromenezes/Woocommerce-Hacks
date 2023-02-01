@@ -1,0 +1,43 @@
+Para criar um MenuFixo que não de conflito com o WPRocket
+
+- Duplique o header e altere o nome para headerfixo
+- HeaderFixo
+  - id css: menufixo
+  - z-index: 999
+  - custom css:
+  
+@media screen and (min-width:1200px) {
+  .elementor-element-1a69fc3a .elementor-image a {
+    margin: 0 -2rem 0 0;
+  }
+}
+  .elementor-nav-menu__container{
+    top:0px!important;
+  }
+  #menufixo.headershow{
+    transform: translateY(0);
+  }
+  #menufixo{
+    position: fixed;
+    top:0;
+    width: 100%;
+    -webkit-transition: transform 0.34s ease;
+    transition : transform 0.34s ease;
+    transform: translateY(-130px);
+  }
+    
+- Utilize a opção html e adicione o seguinte código:
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+jQuery(function($){
+$(document).scroll(function() {
+var y = $(this).scrollTop();
+if (y > 300) { /* change this value here to make it show up at your desired scroll location. */
+$('#menufixo').addClass('headershow');
+} else {
+$('#menufixo').removeClass('headershow');
+}
+});});});
+</script>
